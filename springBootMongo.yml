@@ -1,79 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simpleapp
+  labels:
+    app: simpleapp
+spec:
+  selector:
+    matchLabels:
+      app: simpleapp
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: simpleapp
+        tier: frontend
+    spec:
+      containers:
+      - name: simpleapp
+        image: kamranazeem/simpleapp:php-7-apache-2.4
+        imagePullPolicy: Always
+        env:
+        - name: MYSQL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: simpleapp-credentials
+              key: MYSQL_HOST
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: simpleapp-credentials
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: simpleapp-credentials
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: simpleapp-credentials
+              key: MYSQL_PASSWORD
 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    name: springboot
-  name: spring-controller
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: springboot
-    spec:
-      containers:
-      - image: anildbee1/spring-boot-mongo
-        name: springboot
         ports:
-        - name: springboot
-          containerPort: 8080      
----
-# Node Port Service
-apiVersion: apps/v1
-kind: Service
-metadata:
-  labels:
-    name: springboot
-  name: springboot
-spec:
-  type: ClusterIP
-  ports:
-    - port: 8080
-      targetPort: 8080
-  selector:
-    name: springboot
----
-# Mongo host path rc
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    name: mongo
-  name: mongo-controller
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: mongo
-    spec:
-      containers:
-      - image: mongo
-        name: mongo
-        ports:
-        - name: mongo
-          containerPort: 27017
-          hostPort: 27017
+        - containerPort: 80
+
+        resources:
+          limits:
+            cpu: 10m
+            memory: 20Mi
+          requests:
+            cpu: 5m
+            memory: 10Mi
+
         volumeMounts:
-        - name: mongo-persistent-storage
-          mountPath: /data/db
+        - mountPath: "/config/"
+          name: vol-simpleapp-conf
+
       volumes:
-      - name: mongo-persistent-storage
-        hostPath:
-         path: /tmp/dbbackup
----
-# Mongo Node Port RC
-apiVersion: apps/v1
-kind: Service
-metadata:
-  labels:
-    name: mongo
-  name: mongo
-spec:
-  type: ClusterIP
-  ports:
-    - port: 27017
-      targetPort: 27017
-  selector:
-    name: mongo
+      - name: vol-simpleapp-conf
+        configMap:
+          name: configmap-simpleapp-conf
