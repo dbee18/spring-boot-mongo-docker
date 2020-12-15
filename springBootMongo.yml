@@ -1,5 +1,10 @@
----
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: echoserver
+  name: fluent-bit
+  namespace: logging
+  labels:
+    k8s-app: fluent-bit-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
+...
